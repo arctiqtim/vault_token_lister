@@ -5,11 +5,12 @@
 package main
 
 import (
-	"log"
-	vaultAPI "github.com/hashicorp/vault/api"
 	"flag"
-	"os"
 	"fmt"
+	"log"
+	"os"
+
+	vaultAPI "github.com/hashicorp/vault/api"
 )
 
 func main() {
@@ -29,7 +30,6 @@ func main() {
 	}
 	selfAccessor := self.Data["accessor"].(string)
 
-
 	result, _ := listAccessors(vClient)
 
 	switch accessors := result.Data["keys"].(type) {
@@ -38,7 +38,7 @@ func main() {
 		for _, accessor := range accessors {
 			//fmt.Println(i, accessor)
 			details, err := vClient.Auth().Token().LookupAccessor(accessor.(string))
-			if (err != nil) {
+			if err != nil {
 				panic(err)
 			}
 			policies := details.Data["policies"]
@@ -48,7 +48,7 @@ func main() {
 				for _, p := range typedPolicies {
 					//fmt.Printf(" %s ", policy.(string))
 					if p.(string) == policy {
-						output := fmt.Sprintf("%s accessor displayName=%s: revoke if you will with 'vault token-revoke -accessor %s'\n", policy, displayName, accessor)
+						output := fmt.Sprintf("%s accessor displayName=%s: revoke if you will with 'vault token revoke -accessor %s'\n", policy, displayName, accessor)
 						if selfAccessor == accessor {
 							output = "THIS IS YOU, " + output
 						}
@@ -67,12 +67,10 @@ func main() {
 
 }
 
-
-
 // Get vault object using token + vault_addr
 func getVaultClient(token string, vaultAddr string) vaultAPI.Client {
 	var err error
-	var vClient      *vaultAPI.Client
+	var vClient *vaultAPI.Client
 
 	vaultCFG := *vaultAPI.DefaultConfig()
 
@@ -93,7 +91,7 @@ func listAccessors(client vaultAPI.Client) (*vaultAPI.Secret, error) {
 	request := client.NewRequest("LIST", "/v1/auth/token/accessors")
 
 	resp, err := client.RawRequest(request)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
